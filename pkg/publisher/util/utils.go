@@ -30,7 +30,7 @@ func NewIPFSPublishers(
 	cl ipfsClient.Client,
 ) (publisher.PublisherProvider, error) {
 	noopPublisher := noop.NewNoopPublisher()
-	ipfsPublisher, err := ipfs.NewIPFSPublisher(ctx, cm, cl)
+	ipfsPublisher, err := ipfs.NewIPFSPublisher(cl)
 	if err != nil {
 		return nil, err
 	}
@@ -52,6 +52,7 @@ func configureS3Publisher(cm *system.CleanupManager) (*s3.Publisher, error) {
 		return nil, err
 	}
 
+	// TODO(forrest): why are we doing this? What goes in this dir? We should aim to remove the dir contents, not the whole thing!
 	cm.RegisterCallback(func() error {
 		if err := os.RemoveAll(dir); err != nil {
 			return fmt.Errorf("unable to clean up S3 publisher directory: %w", err)

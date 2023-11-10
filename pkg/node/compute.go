@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/libp2p/go-libp2p/core/host"
+
 	"github.com/bacalhau-project/bacalhau/pkg/models"
 	"github.com/bacalhau-project/bacalhau/pkg/publicapi"
 	compute_endpoint "github.com/bacalhau-project/bacalhau/pkg/publicapi/endpoint/compute"
-	"github.com/libp2p/go-libp2p/core/host"
 
 	"github.com/bacalhau-project/bacalhau/pkg/bidstrategy/resource"
 	"github.com/bacalhau-project/bacalhau/pkg/bidstrategy/semantic"

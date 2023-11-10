@@ -7,11 +7,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"time"
 
-	"github.com/bacalhau-project/bacalhau/docs"
-	"github.com/bacalhau-project/bacalhau/pkg/logger"
-	"github.com/bacalhau-project/bacalhau/pkg/publicapi/middleware"
-	"github.com/bacalhau-project/bacalhau/pkg/version"
 	"github.com/labstack/echo/v4"
 	echomiddelware "github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog"
@@ -20,6 +17,12 @@ import (
 	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/time/rate"
+
+	"github.com/bacalhau-project/bacalhau/docs"
+	"github.com/bacalhau-project/bacalhau/pkg/config/types"
+	"github.com/bacalhau-project/bacalhau/pkg/logger"
+	"github.com/bacalhau-project/bacalhau/pkg/publicapi/middleware"
+	"github.com/bacalhau-project/bacalhau/pkg/version"
 )
 
 const TimeoutMessage = "Server Timeout!"
@@ -33,7 +36,7 @@ type ServerParams struct {
 	AutoCertCache      string
 	TLSCertificateFile string
 	TLSKeyFile         string
-	Config             Config
+	Config             types.APIServerConfig
 }
 
 // Server configures a node's public REST API.
@@ -46,7 +49,7 @@ type Server struct {
 	TLSKeyFile         string
 
 	httpServer http.Server
-	config     Config
+	config     types.APIServerConfig
 	useTLS     bool
 }
 
@@ -99,7 +102,7 @@ func NewAPIServer(params ServerParams) (*Server, error) {
 	// base middle after routing
 	server.Router.Use(
 		echomiddelware.TimeoutWithConfig(echomiddelware.TimeoutConfig{
-			Timeout:      params.Config.RequestHandlerTimeout,
+			Timeout:      time.Duration(params.Config.RequestHandlerTimeout),
 			ErrorMessage: TimeoutMessage,
 			Skipper:      middleware.PathMatchSkipper(params.Config.SkippedTimeoutPaths),
 		}),
@@ -143,9 +146,9 @@ func NewAPIServer(params ServerParams) (*Server, error) {
 
 	server.httpServer = http.Server{
 		Handler:           server.Router,
-		ReadHeaderTimeout: server.config.ReadHeaderTimeout,
-		ReadTimeout:       server.config.ReadTimeout,
-		WriteTimeout:      server.config.WriteTimeout,
+		ReadHeaderTimeout: time.Duration(server.config.ReadHeaderTimeout),
+		ReadTimeout:       time.Duration(server.config.ReadTimeout),
+		WriteTimeout:      time.Duration(server.config.WriteTimeout),
 		TLSConfig:         tlsConfig,
 		BaseContext: func(l net.Listener) context.Context {
 			return logger.ContextWithNodeIDLogger(context.Background(), params.HostID)

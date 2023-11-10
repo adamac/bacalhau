@@ -48,6 +48,16 @@ func NewStorage(cm *system.CleanupManager, cl ipfs.Client) (*StorageProvider, er
 	return storageHandler, nil
 }
 
+func NewStorageFx(dir string, cl ipfs.Client) (*StorageProvider, error) {
+	storageHandler := &StorageProvider{
+		ipfsClient: cl,
+		localDir:   dir,
+	}
+
+	log.Trace().Msgf("IPFS API Copy driver created with address: %s", cl.APIAddress())
+	return storageHandler, nil
+}
+
 func (s *StorageProvider) IsInstalled(ctx context.Context) (bool, error) {
 	_, err := s.ipfsClient.ID(ctx)
 	return err == nil, err

@@ -13,11 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bacalhau-project/bacalhau/pkg/config"
-	"github.com/bacalhau-project/bacalhau/pkg/models"
-	"github.com/bacalhau-project/bacalhau/pkg/storage"
-	"github.com/bacalhau-project/bacalhau/pkg/system"
-	"github.com/bacalhau-project/bacalhau/pkg/util/closer"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/rs/zerolog"
@@ -25,6 +20,12 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/bacalhau-project/bacalhau/pkg/config"
+	"github.com/bacalhau-project/bacalhau/pkg/models"
+	"github.com/bacalhau-project/bacalhau/pkg/storage"
+	"github.com/bacalhau-project/bacalhau/pkg/system"
+	"github.com/bacalhau-project/bacalhau/pkg/util/closer"
 )
 
 // a storage driver runs the downloads content
@@ -53,6 +54,10 @@ func NewStorage(cm *system.CleanupManager) (*StorageProvider, error) {
 
 	log.Debug().Str("dir", dir).Msg("URL download driver created with output dir")
 
+	return newStorage(dir), nil
+}
+
+func NewStorageFx(dir string) (*StorageProvider, error) {
 	return newStorage(dir), nil
 }
 

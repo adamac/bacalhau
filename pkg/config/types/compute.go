@@ -9,6 +9,9 @@ type ComputeConfig struct {
 	JobSelection   model.JobSelectionPolicy `yaml:"JobSelection"`
 	Queue          QueueConfig              `yaml:"Queue"`
 	Logging        LoggingConfig            `yaml:"Logging"`
+	Executors      ExecutorPluginConfig     `yaml:"Executors"`
+	Storages       StoragePluginConfig      `yaml:"Storages"`
+	Publishers     PublisherPluginConfig    `yaml:"Publishers"`
 }
 
 type CapacityConfig struct {
@@ -44,4 +47,25 @@ type QueueConfig struct {
 type LoggingConfig struct {
 	// logging running executions
 	LogRunningExecutionsInterval Duration `yaml:"LogRunningExecutionsInterval"`
+}
+
+type ExecutorPluginConfig struct {
+	Plugins []PluginConfig
+}
+
+type PublisherPluginConfig struct {
+	Plugins []PluginConfig
+}
+
+type StoragePluginConfig struct {
+	Plugins []PluginConfig
+}
+
+type PluginConfig struct {
+	Name             string
+	Path             string
+	Command          string
+	ProtocolVersion  uint
+	MagicCookieKey   string
+	MagicCookieValue string
 }

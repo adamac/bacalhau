@@ -27,8 +27,9 @@ import (
 )
 
 type StandardStorageProviderOptions struct {
-	API                   ipfs.Client
-	DownloadPath          string
+	API ipfs.Client
+	// TODO(forrest) unused
+	//DownloadPath          string
 	AllowListedLocalPaths []string
 }
 

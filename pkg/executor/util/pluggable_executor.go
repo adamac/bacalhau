@@ -7,20 +7,22 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/hashicorp/go-plugin"
+
+	"github.com/bacalhau-project/bacalhau/pkg/config/types"
 	"github.com/bacalhau-project/bacalhau/pkg/executor"
 	"github.com/bacalhau-project/bacalhau/pkg/executor/plugins/grpc"
-	"github.com/hashicorp/go-plugin"
 )
 
 func NewPluginExecutorManager() *PluginExecutorManager {
 	return &PluginExecutorManager{
-		registered: make(map[string]PluginExecutorManagerConfig),
+		registered: make(map[string]types.PluginConfig),
 		active:     make(map[string]*activeExecutor),
 	}
 }
 
 type PluginExecutorManager struct {
-	registered map[string]PluginExecutorManagerConfig
+	registered map[string]types.PluginConfig
 	active     map[string]*activeExecutor
 }
 
@@ -63,7 +65,7 @@ type PluginExecutorManagerConfig struct {
 	MagicCookieValue string
 }
 
-func (e *PluginExecutorManager) RegisterPlugin(config PluginExecutorManagerConfig) error {
+func (e *PluginExecutorManager) RegisterPlugin(config types.PluginConfig) error {
 	_, ok := e.registered[config.Name]
 	if ok {
 		return fmt.Errorf("duplicate registration of exector %s", config.Name)
@@ -103,7 +105,7 @@ func (e *PluginExecutorManager) Stop(ctx context.Context) error {
 
 const PluggableExecutorPluginName = "PLUGGABLE_EXECUTOR"
 
-func (e *PluginExecutorManager) dispense(name string, config PluginExecutorManagerConfig) (executor.Executor, func(), error) {
+func (e *PluginExecutorManager) dispense(name string, config types.PluginConfig) (executor.Executor, func(), error) {
 	client := plugin.NewClient(&plugin.ClientConfig{
 		Plugins: map[string]plugin.Plugin{
 			PluggableExecutorPluginName: &grpc.ExecutorGRPCPlugin{},

@@ -3,6 +3,11 @@ package node
 import (
 	"context"
 
+	libp2p_pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/rs/zerolog/log"
+
 	"github.com/bacalhau-project/bacalhau/pkg/lib/backoff"
 	"github.com/bacalhau-project/bacalhau/pkg/models"
 	"github.com/bacalhau-project/bacalhau/pkg/orchestrator"
@@ -19,10 +24,6 @@ import (
 	"github.com/bacalhau-project/bacalhau/pkg/pubsub/libp2p"
 	"github.com/bacalhau-project/bacalhau/pkg/requester/pubsub/jobinfo"
 	s3helper "github.com/bacalhau-project/bacalhau/pkg/s3"
-	libp2p_pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/rs/zerolog/log"
 
 	"github.com/bacalhau-project/bacalhau/pkg/compute"
 	"github.com/bacalhau-project/bacalhau/pkg/eventhandler"
@@ -265,6 +266,8 @@ func NewRequesterNode(
 		NodeID:   host.ID().String(),
 		Interval: requesterConfig.HousekeepingBackgroundTaskInterval,
 	})
+	// due to method refactor
+	housekeeping.Start(ctx)
 
 	// register a handler for the bacalhau protocol handler that will forward requests to the scheduler
 	bprotocol.NewCallbackHandler(bprotocol.CallbackHandlerParams{

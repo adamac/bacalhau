@@ -5,13 +5,13 @@ import (
 	"github.com/libp2p/go-libp2p/core/host"
 
 	"github.com/bacalhau-project/bacalhau/pkg/config/types"
-	"github.com/bacalhau-project/bacalhau/pkg/models"
 	"github.com/bacalhau-project/bacalhau/pkg/publicapi"
 	"github.com/bacalhau-project/bacalhau/pkg/publicapi/endpoint/agent"
 	"github.com/bacalhau-project/bacalhau/pkg/publicapi/endpoint/shared"
+	"github.com/bacalhau-project/bacalhau/pkg/routing"
 )
 
-func NewPublicAPIServer(cfg types.APIConfig, h host.Host, nodeInfoProvider models.NodeInfoProvider) (*publicapi.Server, error) {
+func NewPublicAPIServer(cfg types.APIConfig, h host.Host, nodeInfoProvider *routing.NodeInfoProvider) (*publicapi.Server, error) {
 	// TODO don't do this here.
 	cfg.ServerConfig.SkippedTimeoutPaths = append(cfg.ServerConfig.SkippedTimeoutPaths, []string{
 		"/api/v1/requester/websocket/events",

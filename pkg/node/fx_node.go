@@ -1,6 +1,7 @@
 package node
 
 import (
+	"context"
 	"time"
 
 	"github.com/libp2p/go-libp2p/p2p/protocol/identify"
@@ -10,21 +11,31 @@ import (
 	"github.com/bacalhau-project/bacalhau/pkg/config/types"
 	"github.com/bacalhau-project/bacalhau/pkg/ipfs"
 	"github.com/bacalhau-project/bacalhau/pkg/node/modules/common"
+	"github.com/bacalhau-project/bacalhau/pkg/node/modules/requester"
 	"github.com/bacalhau-project/bacalhau/pkg/repo"
+	"github.com/bacalhau-project/bacalhau/pkg/routing"
+	"github.com/bacalhau-project/bacalhau/pkg/routing/inmemory"
 	"github.com/bacalhau-project/bacalhau/pkg/version"
 )
 
-func NewFXNode(cfg types.NodeConfig, ipfsClient ipfs.Client, r *repo.FsRepo) (*Node, error) {
+func NewFXNode(ctx context.Context, cfg types.NodeConfig, ipfsClient ipfs.Client, r *repo.FsRepo) (*Node, error) {
 
 	// idk what this is for but we do it.
 	identify.ActivationThresh = 2
 
 	app := fx.New(
+		common.ConfigFields(cfg),
 		fx.Provide(func() *repo.FsRepo { return r }),
 		fx.Provide(func() ipfs.Client { return ipfsClient }),
 		fx.Provide(func() types.NodeConfig { return cfg }),
-		fx.Provide(common.ConfigFields),
 		fx.Provide(common.Libp2pHost),
+		fx.Provide(func() routing.NodeInfoStore {
+			// node info store that is used for both discovering compute nodes, as to find addresses of other nodes for routing requests.
+			// TODO find a homme
+			return inmemory.NewNodeInfoStore(inmemory.NodeInfoStoreParams{
+				TTL: 10 * time.Minute,
+			})
+		}),
 		common.NewPubSubService(common.PubSubConfig{
 			Gossipsub: common.GossipSubConfig{
 				TracerPath:   config.GetLibp2pTracerPath(),
@@ -51,9 +62,16 @@ func NewFXNode(cfg types.NodeConfig, ipfsClient ipfs.Client, r *repo.FsRepo) (*N
 		fx.Provide(common.NewPublicAPIServer),
 		// required for requester and computer
 		fx.Provide(common.StorageBuiltinProvider),
+		requester.Service(),
 
 		// required for compute node.
 		// fx.Provide(compute.ExecutorBuiltinProvider),
 		// fx.Provide(compute.PublisherBuiltinProvider),
 	)
+
+	if err := app.Start(ctx); err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }

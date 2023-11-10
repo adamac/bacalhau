@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/bacalhau-project/bacalhau/pkg/config"
+	"github.com/bacalhau-project/bacalhau/pkg/config/types"
 	"github.com/bacalhau-project/bacalhau/pkg/executor"
 	executor_util "github.com/bacalhau-project/bacalhau/pkg/executor/util"
 	"github.com/bacalhau-project/bacalhau/pkg/lib/provider"
@@ -97,7 +98,7 @@ func NewPluginExecutorFactory() ExecutorsFactory {
 				ctx,
 				nodeConfig.CleanupManager,
 				executor_util.PluginExecutorOptions{
-					Plugins: []executor_util.PluginExecutorManagerConfig{
+					Plugins: []types.PluginConfig{
 						{
 							Name:             models.EngineDocker,
 							Path:             config.GetExecutorPluginsPath(),

@@ -10,13 +10,13 @@ import (
 	"github.com/rs/zerolog/log"
 	"go.uber.org/fx"
 
+	"github.com/bacalhau-project/bacalhau/pkg/compute"
 	"github.com/bacalhau-project/bacalhau/pkg/config/types"
 	"github.com/bacalhau-project/bacalhau/pkg/eventhandler"
 	"github.com/bacalhau-project/bacalhau/pkg/jobstore"
 	"github.com/bacalhau-project/bacalhau/pkg/lib/backoff"
 	"github.com/bacalhau-project/bacalhau/pkg/model"
 	"github.com/bacalhau-project/bacalhau/pkg/models"
-	"github.com/bacalhau-project/bacalhau/pkg/node"
 	"github.com/bacalhau-project/bacalhau/pkg/orchestrator"
 	"github.com/bacalhau-project/bacalhau/pkg/orchestrator/evaluation"
 	"github.com/bacalhau-project/bacalhau/pkg/orchestrator/planner"
@@ -40,6 +40,25 @@ import (
 	"github.com/bacalhau-project/bacalhau/pkg/system"
 	"github.com/bacalhau-project/bacalhau/pkg/transport/bprotocol"
 )
+
+type RequesterService struct {
+	// Visible for testing
+	Endpoint       requester.Endpoint
+	JobStore       jobstore.Store
+	NodeDiscoverer orchestrator.NodeDiscoverer
+	computeProxy   *bprotocol.ComputeProxy
+	localCallback  compute.Callback
+}
+
+func NewRequesterService(endpoint *requester.BaseEndpoint, discover *discovery.Chain, store jobstore.Store, proxy *bprotocol.ComputeProxy) *RequesterService {
+	return &RequesterService{
+		Endpoint:       endpoint,
+		localCallback:  endpoint,
+		NodeDiscoverer: discover,
+		JobStore:       store,
+		computeProxy:   proxy,
+	}
+}
 
 func NewComputeProxy(h host.Host) *bprotocol.ComputeProxy {
 	return bprotocol.NewComputeProxy(bprotocol.ComputeProxyParams{
@@ -114,7 +133,7 @@ func NewJobInfoPubSub(lc fx.Lifecycle, h host.Host, pubsub *libp2p_pubsub.PubSub
 	// PubSub to publish job events to the network
 	jobInfoPubSub, err := libp2p.NewPubSub[jobinfo.Envelope](libp2p.PubSubParams{
 		Host:        h,
-		TopicName:   node.JobInfoTopic,
+		TopicName:   "bacalhau-job-info",
 		PubSub:      pubsub,
 		IgnoreLocal: true,
 	})
@@ -439,4 +458,30 @@ func RegisterOrchestratorEndpoint(server *publicapi.Server, endpoint *orchestrat
 		JobStore:     jobStore,
 		NodeStore:    nodeStore,
 	})
+}
+
+func Service() fx.Option {
+	return fx.Module("requester",
+		fx.Provide(NewComputeProxy),
+		fx.Provide(NewJobStore),
+		fx.Provide(NewContextProvider),
+		fx.Provide(NewJobEventConsumer),
+		fx.Provide(NewEventEmitter),
+		fx.Provide(NewJobInfoPubSub),
+		fx.Provide(NewNodeDiscoveryChain),
+		fx.Provide(NewJobInfoPublisher),
+		fx.Provide(NewNodeSelector),
+		fx.Provide(NewEvaluationBroker),
+		fx.Provide(NewPlanner),
+		fx.Provide(NewRetryStrategy),
+		fx.Provide(NewInMemorySchedulerProvider),
+		fx.Provide(NewBaseEndpoint),
+		fx.Provide(NewV2BaseEndpoint),
+		fx.Provide(NewRequesterAPIServer),
+
+		fx.Invoke(RegisterEventEmitterHandlers),
+		fx.Invoke(DispatchHouseKeeping),
+		fx.Invoke(RegisterOrchestratorEndpoint),
+		fx.Invoke(DispatchHouseKeeping),
+	)
 }

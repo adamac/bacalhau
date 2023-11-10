@@ -250,6 +250,15 @@ func serve(cmd *cobra.Command) error {
 		nodeConfig.RequesterTLSKeyFile = key
 	}
 
+	var nodeCfg types.NodeConfig
+	if err := config.ForKey(types.Node, &nodeCfg); err != nil {
+		return err
+	}
+
+	if _, err := node.NewFXNode(ctx, nodeCfg, ipfsClient, fsRepo); err != nil {
+		return err
+	}
+
 	// Create node
 	standardNode, err := node.NewNode(ctx, nodeConfig)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/bacalhau-project/bacalhau/pkg/config"
+	"github.com/bacalhau-project/bacalhau/pkg/config/types"
 	"github.com/bacalhau-project/bacalhau/pkg/executor"
 	"github.com/bacalhau-project/bacalhau/pkg/executor/docker"
 	noop_executor "github.com/bacalhau-project/bacalhau/pkg/executor/noop"
@@ -148,7 +149,7 @@ func NewNoopExecutors(config noop_executor.ExecutorConfig) executor.ExecutorProv
 }
 
 type PluginExecutorOptions struct {
-	Plugins []PluginExecutorManagerConfig
+	Plugins []types.PluginConfig
 }
 
 func NewPluginExecutorProvider(

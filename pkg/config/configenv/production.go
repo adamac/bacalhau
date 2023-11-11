@@ -93,14 +93,14 @@ var ProductionComputeConfig = types.ComputeConfig{
 	Capacity: types.CapacityConfig{
 		IgnorePhysicalResourceLimits: false,
 		TotalResourceLimits: model.ResourceUsageConfig{
-			CPU:    "",
-			Memory: "",
+			CPU:    "500m",
+			Memory: "1Gb",
 			Disk:   "",
 			GPU:    "",
 		},
 		JobResourceLimits: model.ResourceUsageConfig{
-			CPU:    "",
-			Memory: "",
+			CPU:    "500m",
+			Memory: "1Gb",
 			Disk:   "",
 			GPU:    "",
 		},
@@ -111,8 +111,8 @@ var ProductionComputeConfig = types.ComputeConfig{
 			GPU:    "",
 		},
 		QueueResourceLimits: model.ResourceUsageConfig{
-			CPU:    "",
-			Memory: "",
+			CPU:    "500m",
+			Memory: "1Gb",
 			Disk:   "",
 			GPU:    "",
 		},
@@ -126,7 +126,7 @@ var ProductionComputeConfig = types.ComputeConfig{
 		JobNegotiationTimeout:                 types.Duration(3 * time.Minute),
 		MinJobExecutionTimeout:                types.Duration(500 * time.Millisecond),
 		MaxJobExecutionTimeout:                types.Duration(model.NoJobTimeout),
-		DefaultJobExecutionTimeout:            types.Duration(10 * time.Minute),
+		DefaultJobExecutionTimeout:            types.Duration(model.NoJobTimeout),
 	},
 	JobSelection: model.JobSelectionPolicy{
 		Locality:            model.Anywhere,

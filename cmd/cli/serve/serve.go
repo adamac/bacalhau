@@ -203,52 +203,57 @@ func serve(cmd *cobra.Command) error {
 		return err
 	}
 
-	computeConfig, err := GetComputeConfig()
-	if err != nil {
-		return err
-	}
+	/*
+		computeConfig, err := GetComputeConfig()
+		if err != nil {
+			return err
+		}
 
-	requesterConfig, err := GetRequesterConfig()
-	if err != nil {
-		return err
-	}
+		requesterConfig, err := GetRequesterConfig()
+		if err != nil {
+			return err
+		}
 
-	featureConfig, err := getDisabledFeatures()
-	if err != nil {
-		return err
-	}
+		featureConfig, err := getDisabledFeatures()
+		if err != nil {
+			return err
+		}
 
-	allowedListLocalPaths := getAllowListedLocalPathsConfig()
+		allowedListLocalPaths := getAllowListedLocalPathsConfig()
 
-	// TODO (forrest): [ux] in the future we should make this configurable to users.
-	autoLabel := true
-	// Create node config from cmd arguments
-	nodeConfig := node.NodeConfig{
-		CleanupManager:        cm,
-		IPFSClient:            ipfsClient,
-		Host:                  libp2pHost,
-		DisabledFeatures:      featureConfig,
-		HostAddress:           config.ServerAPIHost(),
-		APIPort:               config.ServerAPIPort(),
-		ComputeConfig:         computeConfig,
-		RequesterNodeConfig:   requesterConfig,
-		IsComputeNode:         isComputeNode,
-		IsRequesterNode:       isRequesterNode,
-		Labels:                getNodeLabels(autoLabel),
-		AllowListedLocalPaths: allowedListLocalPaths,
-		FsRepo:                fsRepo,
-	}
+	*/
 
-	if isRequesterNode {
-		// We only want auto TLS for the requester node, but this info doesn't fit well
-		// with the other data in the requesterConfig.
-		nodeConfig.RequesterAutoCert = config.ServerAutoCertDomain()
-		nodeConfig.RequesterAutoCertCache = config.GetAutoCertCachePath()
+	/*
+		// TODO (forrest): [ux] in the future we should make this configurable to users.
+		autoLabel := true
+		// Create node config from cmd arguments
+		nodeConfig := node.NodeConfig{
+			CleanupManager:        cm,
+			IPFSClient:            ipfsClient,
+			Host:                  libp2pHost,
+			DisabledFeatures:      featureConfig,
+			HostAddress:           config.ServerAPIHost(),
+			APIPort:               config.ServerAPIPort(),
+			ComputeConfig:         computeConfig,
+			RequesterNodeConfig:   requesterConfig,
+			IsComputeNode:         isComputeNode,
+			IsRequesterNode:       isRequesterNode,
+			Labels:                getNodeLabels(autoLabel),
+			AllowListedLocalPaths: allowedListLocalPaths,
+			FsRepo:                fsRepo,
+		}
 
-		cert, key := config.GetRequesterCertificateSettings()
-		nodeConfig.RequesterTLSCertificateFile = cert
-		nodeConfig.RequesterTLSKeyFile = key
-	}
+		if isRequesterNode {
+			// We only want auto TLS for the requester node, but this info doesn't fit well
+			// with the other data in the requesterConfig.
+			nodeConfig.RequesterAutoCert = config.ServerAutoCertDomain()
+			nodeConfig.RequesterAutoCertCache = config.GetAutoCertCachePath()
+
+			cert, key := config.GetRequesterCertificateSettings()
+			nodeConfig.RequesterTLSCertificateFile = cert
+			nodeConfig.RequesterTLSKeyFile = key
+		}
+	*/
 
 	var nodeCfg types.NodeConfig
 	if err := config.ForKey(types.Node, &nodeCfg); err != nil {

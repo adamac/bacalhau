@@ -75,14 +75,14 @@ var LocalComputeConfig = types.ComputeConfig{
 	Capacity: types.CapacityConfig{
 		IgnorePhysicalResourceLimits: false,
 		TotalResourceLimits: model.ResourceUsageConfig{
-			CPU:    "",
-			Memory: "",
+			CPU:    "500m",
+			Memory: "1Gb",
 			Disk:   "",
 			GPU:    "",
 		},
 		JobResourceLimits: model.ResourceUsageConfig{
-			CPU:    "",
-			Memory: "",
+			CPU:    "500m",
+			Memory: "1Gb",
 			Disk:   "",
 			GPU:    "",
 		},

@@ -13,6 +13,7 @@ import (
 	routedhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 	"github.com/libp2p/go-libp2p/p2p/protocol/identify"
 
+	"github.com/bacalhau-project/bacalhau/pkg/config/types"
 	"github.com/bacalhau-project/bacalhau/pkg/models"
 	"github.com/bacalhau-project/bacalhau/pkg/publicapi"
 	"github.com/bacalhau-project/bacalhau/pkg/publicapi/endpoint/agent"
@@ -200,19 +201,30 @@ func NewNode(
 
 	// public http api server
 	serverParams := publicapi.ServerParams{
-		Router:  echo.New(),
-		Address: config.HostAddress,
-		Port:    config.APIPort,
-		HostID:  config.Host.ID().String(),
-		//Config:  config.APIServerConfig,
+		Router: echo.New(),
+		HostID: config.Host.ID().String(),
+		Config: types.ServerAPIConfig{
+			Host:                  config.HostAddress,
+			Port:                  int(config.APIPort),
+			ReadHeaderTimeout:     types.Duration(config.APIServerConfig.ReadHeaderTimeout),
+			ReadTimeout:           types.Duration(config.APIServerConfig.ReadTimeout),
+			WriteTimeout:          types.Duration(config.APIServerConfig.WriteTimeout),
+			RequestHandlerTimeout: types.Duration(config.APIServerConfig.RequestHandlerTimeout),
+			SkippedTimeoutPaths:   config.APIServerConfig.SkippedTimeoutPaths,
+			MaxBytesToReadInBody:  config.APIServerConfig.MaxBytesToReadInBody,
+			ThrottleLimit:         config.APIServerConfig.ThrottleLimit,
+			Protocol:              config.APIServerConfig.Protocol,
+			LogLevel:              config.APIServerConfig.LogLevel,
+			EnableSwaggerUI:       config.APIServerConfig.EnableSwaggerUI,
+		},
 	}
 
 	// Only allow autocert for requester nodes
 	if config.IsRequesterNode {
-		serverParams.AutoCertDomain = config.RequesterAutoCert
-		serverParams.AutoCertCache = config.RequesterAutoCertCache
-		serverParams.TLSCertificateFile = config.RequesterTLSCertificateFile
-		serverParams.TLSKeyFile = config.RequesterTLSKeyFile
+		serverParams.Config.TLS.AutoCert = config.RequesterAutoCert
+		serverParams.Config.TLS.AutoCertCachePath = config.RequesterAutoCertCache
+		serverParams.Config.TLS.ServerCertificate = config.RequesterTLSCertificateFile
+		serverParams.Config.TLS.ServerKey = config.RequesterTLSKeyFile
 	}
 
 	apiServer, err := publicapi.NewAPIServer(serverParams)

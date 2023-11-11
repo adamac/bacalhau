@@ -28,37 +28,25 @@ import (
 const TimeoutMessage = "Server Timeout!"
 
 type ServerParams struct {
-	Router             *echo.Echo
-	Address            string
-	Port               uint16
-	HostID             string
-	AutoCertDomain     string
-	AutoCertCache      string
-	TLSCertificateFile string
-	TLSKeyFile         string
-	Config             types.APIServerConfig
+	Router *echo.Echo
+	HostID string
+
+	Config types.ServerAPIConfig
 }
 
 // Server configures a node's public REST API.
 type Server struct {
-	Router  *echo.Echo
-	Address string
-	Port    uint16
-
-	TLSCertificateFile string
-	TLSKeyFile         string
+	Router *echo.Echo
 
 	httpServer http.Server
-	config     types.APIServerConfig
 	useTLS     bool
+	Config     types.ServerAPIConfig
 }
 
 func NewAPIServer(params ServerParams) (*Server, error) {
 	server := &Server{
-		Router:  params.Router,
-		Address: params.Address,
-		Port:    params.Port,
-		config:  params.Config,
+		Router: params.Router,
+		Config: params.Config,
 	}
 
 	// migrate old endpoints to new versioned ones
@@ -112,23 +100,23 @@ func NewAPIServer(params ServerParams) (*Server, error) {
 			*log.Ctx(logger.ContextWithNodeIDLogger(context.Background(), params.HostID)),
 			logLevel),
 		middleware.Otel(),
-		echomiddelware.BodyLimit(server.config.MaxBytesToReadInBody),
+		echomiddelware.BodyLimit(server.Config.MaxBytesToReadInBody),
 		echomiddelware.Recover(),
 	)
 
-	if server.config.EnableSwaggerUI {
+	if server.Config.EnableSwaggerUI {
 		docs.SwaggerInfo.Version = version.Get().GitVersion
 		server.Router.GET("/swagger/*", echo.WrapHandler(httpSwagger.WrapHandler))
 	}
 
 	var tlsConfig *tls.Config
-	if params.AutoCertDomain != "" {
-		log.Ctx(context.TODO()).Debug().Msgf("Setting up auto-cert for %s", params.AutoCertDomain)
+	if params.Config.TLS.AutoCert != "" {
+		log.Ctx(context.TODO()).Debug().Msgf("Setting up auto-cert for %s", params.Config.TLS.AutoCert)
 
 		autoTLSManager := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
-			Cache:      autocert.DirCache(params.AutoCertCache),
-			HostPolicy: autocert.HostWhitelist(params.AutoCertDomain),
+			Cache:      autocert.DirCache(params.Config.TLS.AutoCertCachePath),
+			HostPolicy: autocert.HostWhitelist(params.Config.TLS.AutoCert),
 		}
 		tlsConfig = &tls.Config{
 			GetCertificate: autoTLSManager.GetCertificate,
@@ -138,17 +126,17 @@ func NewAPIServer(params ServerParams) (*Server, error) {
 
 		server.useTLS = true
 	} else {
-		server.useTLS = params.TLSCertificateFile != "" && params.TLSKeyFile != ""
+		server.useTLS = params.Config.TLS.ServerCertificate != "" && params.Config.TLS.ServerKey != ""
 	}
 
-	server.TLSCertificateFile = params.TLSCertificateFile
-	server.TLSKeyFile = params.TLSKeyFile
+	server.Config.TLS.ServerCertificate = params.Config.TLS.ServerCertificate
+	server.Config.TLS.ServerKey = params.Config.TLS.ServerKey
 
 	server.httpServer = http.Server{
 		Handler:           server.Router,
-		ReadHeaderTimeout: time.Duration(server.config.ReadHeaderTimeout),
-		ReadTimeout:       time.Duration(server.config.ReadTimeout),
-		WriteTimeout:      time.Duration(server.config.WriteTimeout),
+		ReadHeaderTimeout: time.Duration(server.Config.ReadHeaderTimeout),
+		ReadTimeout:       time.Duration(server.Config.ReadTimeout),
+		WriteTimeout:      time.Duration(server.Config.WriteTimeout),
 		TLSConfig:         tlsConfig,
 		BaseContext: func(l net.Listener) context.Context {
 			return logger.ContextWithNodeIDLogger(context.Background(), params.HostID)
@@ -160,7 +148,7 @@ func NewAPIServer(params ServerParams) (*Server, error) {
 
 // GetURI returns the HTTP URI that the server is listening on.
 func (apiServer *Server) GetURI() *url.URL {
-	interpolated := fmt.Sprintf("%s://%s:%d", apiServer.config.Protocol, apiServer.Address, apiServer.Port)
+	interpolated := fmt.Sprintf("%s://%s:%d", apiServer.Config.Protocol, apiServer.Config.Host, apiServer.Config.Port)
 	url, err := url.Parse(interpolated)
 	if err != nil {
 		panic(fmt.Errorf("callback url must parse: %s", interpolated))
@@ -183,36 +171,36 @@ func (apiServer *Server) GetURI() *url.URL {
 //
 //nolint:lll
 func (apiServer *Server) ListenAndServe(ctx context.Context) error {
-	addr := fmt.Sprintf("%s:%d", apiServer.Address, apiServer.Port)
+	addr := fmt.Sprintf("%s:%d", apiServer.Config.Host, apiServer.Config.Port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
 
-	if apiServer.Port == 0 {
+	if apiServer.Config.Port == 0 {
 		switch addr := listener.Addr().(type) {
 		case *net.TCPAddr:
-			apiServer.Port = uint16(addr.Port)
+			apiServer.Config.Port = addr.Port
 		default:
 			return fmt.Errorf("unknown address %v", addr)
 		}
 	}
 
 	log.Ctx(ctx).Debug().Msgf(
-		"API server listening for host %s on %s...", apiServer.Address, listener.Addr().String())
+		"API server listening for host %s on %s...", apiServer.Config.Host, listener.Addr().String())
 
 	go func() {
 		var err error
 
 		if apiServer.useTLS {
-			err = apiServer.httpServer.ServeTLS(listener, apiServer.TLSCertificateFile, apiServer.TLSKeyFile)
+			err = apiServer.httpServer.ServeTLS(listener, apiServer.Config.TLS.ServerCertificate, apiServer.Config.TLS.ServerKey)
 		} else {
 			err = apiServer.httpServer.Serve(listener)
 		}
 
 		if err == http.ErrServerClosed {
 			log.Ctx(ctx).Debug().Msgf(
-				"API server closed for host %s on %s.", apiServer.Address, apiServer.httpServer.Addr)
+				"API server closed for host %s on %s.", apiServer.Config.Host, apiServer.httpServer.Addr)
 		} else if err != nil {
 			log.Ctx(ctx).Err(err).Msg("Api server can't run. Cannot serve client requests!")
 		}

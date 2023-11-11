@@ -9,10 +9,10 @@ import (
 )
 
 type NodeConfig struct {
-	ClientAPI APIConfig    `yaml:"ClientAPI"`
-	ServerAPI APIConfig    `yaml:"ServerAPI"`
-	Libp2p    Libp2pConfig `yaml:"Libp2P"`
-	IPFS      IpfsConfig   `yaml:"IPFS"`
+	ClientAPI ClientAPIConfig `yaml:"ClientAPI"`
+	ServerAPI ServerAPIConfig `yaml:"ServerAPI"`
+	Libp2p    Libp2pConfig    `yaml:"Libp2P"`
+	IPFS      IpfsConfig      `yaml:"IPFS"`
 
 	Compute   ComputeConfig   `yaml:"Compute"`
 	Requester RequesterConfig `yaml:"Requester"`
@@ -41,7 +41,7 @@ type NodeConfig struct {
 	Labels map[string]string `yaml:"Labels"`
 }
 
-type APIConfig struct {
+type ServerAPIConfig struct {
 	// Host is the hostname of an environment's public API servers.
 	Host string `yaml:"Host"`
 	// Port is the port that an environment serves the public API on.
@@ -49,8 +49,47 @@ type APIConfig struct {
 	// TLS returns information about how TLS is configured for the public server
 	TLS TLSConfiguration `yaml:"TLS"`
 
-	// TODO this is insane, remove it.
-	ServerConfig APIServerConfig `yaml:"ServerConfig"`
+	// These are TCP connection deadlines and not HTTP timeouts. They don't control the time it takes for our handlers
+	// to complete. Deadlines operate on the connection, so our server will fail to return a result only after
+	// the handlers try to access connection properties
+	// ReadHeaderTimeout is the amount of time allowed to read request headers
+	ReadHeaderTimeout Duration `yaml:"ReadHeaderTimeout"`
+	// ReadTimeout is the maximum duration for reading the entire request, including the body
+	ReadTimeout Duration `yaml:"ReadTimeout"`
+	// WriteTimeout is the maximum duration before timing out writes of the response.
+	// It doesn't cancel the context and doesn't stop handlers from running even after failing the request.
+	// It is for added safety and should be a bit longer than the request handler timeout for better error handling.
+	WriteTimeout Duration `yaml:"WriteTimeout"`
+
+	// This represents maximum duration for handlers to complete, or else fail the request with 503 error code.
+	RequestHandlerTimeout Duration `yaml:"RequestHandlerTimeout"`
+
+	// SkippedTimeoutPaths is a list of paths that should not be subject to the request handler timeout.
+	SkippedTimeoutPaths []string `yaml:"SkippedTimeoutPaths"`
+
+	// MaxBytesToReadInBody is used by safeHandlerFuncWrapper as the max size of body
+	MaxBytesToReadInBody string `yaml:"MaxBytesToReadInBody"`
+
+	// ThrottleLimit is the maximum number of requests per second
+	ThrottleLimit int `yaml:"ThrottleLimit"`
+
+	// Protocol
+	Protocol string `yaml:"Protocol"`
+
+	// LogLevel is the minimum log level to log requests
+	LogLevel string `yaml:"LogLevel"`
+
+	// EnableSwaggerUI is a flag to enable swagger UI
+	EnableSwaggerUI bool `yaml:"EnableSwaggerUI"`
+}
+
+type ClientAPIConfig struct {
+	// Host is the hostname of an environment's public API servers.
+	Host string `yaml:"Host"`
+	// Port is the port that an environment serves the public API on.
+	Port int `yaml:"Port"`
+	// TLS returns information about how TLS is configured for the public server
+	TLS TLSConfiguration `yaml:"TLS"`
 }
 
 type TLSConfiguration struct {
@@ -105,39 +144,4 @@ type FeatureConfig struct {
 	Engines    []string `yaml:"Engines"`
 	Publishers []string `yaml:"Publishers"`
 	Storages   []string `yaml:"Storages"`
-}
-
-type APIServerConfig struct {
-	// These are TCP connection deadlines and not HTTP timeouts. They don't control the time it takes for our handlers
-	// to complete. Deadlines operate on the connection, so our server will fail to return a result only after
-	// the handlers try to access connection properties
-	// ReadHeaderTimeout is the amount of time allowed to read request headers
-	ReadHeaderTimeout Duration
-	// ReadTimeout is the maximum duration for reading the entire request, including the body
-	ReadTimeout Duration
-	// WriteTimeout is the maximum duration before timing out writes of the response.
-	// It doesn't cancel the context and doesn't stop handlers from running even after failing the request.
-	// It is for added safety and should be a bit longer than the request handler timeout for better error handling.
-	WriteTimeout Duration
-
-	// This represents maximum duration for handlers to complete, or else fail the request with 503 error code.
-	RequestHandlerTimeout Duration
-
-	// SkippedTimeoutPaths is a list of paths that should not be subject to the request handler timeout.
-	SkippedTimeoutPaths []string
-
-	// MaxBytesToReadInBody is used by safeHandlerFuncWrapper as the max size of body
-	MaxBytesToReadInBody string
-
-	// ThrottleLimit is the maximum number of requests per second
-	ThrottleLimit int
-
-	// Protocol
-	Protocol string
-
-	// LogLevel is the minimum log level to log requests
-	LogLevel string
-
-	// EnableSwaggerUI is a flag to enable swagger UI
-	EnableSwaggerUI bool
 }

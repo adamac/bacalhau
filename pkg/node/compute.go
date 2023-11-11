@@ -176,7 +176,7 @@ func NewComputeNode(
 			resource.NewMaxCapacityStrategy(resource.MaxCapacityStrategyParams{
 				MaxJobRequirements: config.JobResourceLimits,
 			}),
-			resource.NewAvailableCapacityStrategy(ctx, resource.AvailableCapacityStrategyParams{
+			resource.NewAvailableCapacityStrategy(resource.AvailableCapacityStrategyParams{
 				RunningCapacityTracker:  runningCapacityTracker,
 				EnqueuedCapacityTracker: enqueuedCapacityTracker,
 			}),
@@ -191,6 +191,8 @@ func NewComputeNode(
 		//
 		Executors: executors,
 	})
+	// TODO this context is only used for logging, canceling it is a noop
+	// TODO wtf is this even supposed to do? this is in the wrong order.
 	_, loggingCancel := context.WithCancel(ctx)
 	cleanupManager.RegisterCallback(func() error {
 		loggingCancel()

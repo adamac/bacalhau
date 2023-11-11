@@ -21,14 +21,28 @@ var Production = types.BacalhauConfig{
 		CheckFrequency: types.Duration(24 * time.Hour),
 	},
 	Node: types.NodeConfig{
-		ClientAPI: types.APIConfig{
+		ClientAPI: types.ClientAPIConfig{
 			Host: "bootstrap.production.bacalhau.org",
 			Port: 1234,
-		},
-		ServerAPI: types.APIConfig{
-			Host: "0.0.0.0",
-			Port: 1234,
 			TLS:  types.TLSConfiguration{},
+		},
+		ServerAPI: types.ServerAPIConfig{
+			Host:                  "0.0.0.0",
+			Port:                  1234,
+			TLS:                   types.TLSConfiguration{},
+			ReadHeaderTimeout:     types.Duration(5 * time.Second),
+			ReadTimeout:           types.Duration(20 * time.Second),
+			WriteTimeout:          types.Duration(45 * time.Second),
+			RequestHandlerTimeout: types.Duration(30 * time.Second),
+			SkippedTimeoutPaths: []string{
+				"/api/v1/requester/websocket/events",
+				"/api/v1/requester/logs",
+			},
+			MaxBytesToReadInBody: "10MB",
+			ThrottleLimit:        1000,
+			Protocol:             "http",
+			LogLevel:             "info",
+			EnableSwaggerUI:      false,
 		},
 		BootstrapAddresses: []string{
 			"/ip4/35.245.115.191/tcp/1235/p2p/QmdZQ7ZbhnvWY1J12XYKGHApJ6aufKyLNSvf8jZBrBaAVL",

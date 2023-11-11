@@ -11,22 +11,11 @@ import (
 	"github.com/bacalhau-project/bacalhau/pkg/routing"
 )
 
-func NewPublicAPIServer(cfg types.APIConfig, h host.Host, nodeInfoProvider *routing.NodeInfoProvider) (*publicapi.Server, error) {
-	// TODO don't do this here.
-	cfg.ServerConfig.SkippedTimeoutPaths = append(cfg.ServerConfig.SkippedTimeoutPaths, []string{
-		"/api/v1/requester/websocket/events",
-		"/api/v1/requester/logs",
-	}...)
+func NewPublicAPIServer(cfg types.ServerAPIConfig, h host.Host, nodeInfoProvider *routing.NodeInfoProvider) (*publicapi.Server, error) {
 	apiServer, err := publicapi.NewAPIServer(publicapi.ServerParams{
-		Router:             echo.New(),
-		Address:            cfg.Host,
-		Port:               uint16(cfg.Port),
-		HostID:             h.ID().String(),
-		AutoCertDomain:     cfg.TLS.AutoCert,
-		AutoCertCache:      cfg.TLS.AutoCertCachePath,
-		TLSCertificateFile: cfg.TLS.ServerCertificate,
-		TLSKeyFile:         cfg.TLS.ServerKey,
-		Config:             cfg.ServerConfig,
+		Router: echo.New(),
+		HostID: h.ID().String(),
+		Config: cfg,
 	})
 	if err != nil {
 		return nil, err

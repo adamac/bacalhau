@@ -10,8 +10,8 @@ import (
 )
 
 type AvailableCapacityStrategyParams struct {
-	RunningCapacityTracker  capacity.Tracker
-	EnqueuedCapacityTracker capacity.Tracker
+	RunningCapacityTracker  capacity.Tracker `name:"running"`
+	EnqueuedCapacityTracker capacity.Tracker `name:"enqueue"`
 }
 
 type AvailableCapacityStrategy struct {
@@ -19,7 +19,7 @@ type AvailableCapacityStrategy struct {
 	enqueuedCapacityTracker capacity.Tracker
 }
 
-func NewAvailableCapacityStrategy(ctx context.Context, params AvailableCapacityStrategyParams) *AvailableCapacityStrategy {
+func NewAvailableCapacityStrategy(params AvailableCapacityStrategyParams) *AvailableCapacityStrategy {
 	s := &AvailableCapacityStrategy{
 		runningCapacityTracker:  params.RunningCapacityTracker,
 		enqueuedCapacityTracker: params.EnqueuedCapacityTracker,

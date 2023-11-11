@@ -20,14 +20,28 @@ var Development = types.BacalhauConfig{
 		SkipChecks: true,
 	},
 	Node: types.NodeConfig{
-		ClientAPI: types.APIConfig{
+		ClientAPI: types.ClientAPIConfig{
 			Host: "bootstrap.development.bacalhau.org",
 			Port: 1234,
-		},
-		ServerAPI: types.APIConfig{
-			Host: "0.0.0.0",
-			Port: 1234,
 			TLS:  types.TLSConfiguration{},
+		},
+		ServerAPI: types.ServerAPIConfig{
+			Host:                  "0.0.0.0",
+			Port:                  1234,
+			TLS:                   types.TLSConfiguration{},
+			ReadHeaderTimeout:     types.Duration(5 * time.Second),
+			ReadTimeout:           types.Duration(20 * time.Second),
+			WriteTimeout:          types.Duration(45 * time.Second),
+			RequestHandlerTimeout: types.Duration(30 * time.Second),
+			SkippedTimeoutPaths: []string{
+				"/api/v1/requester/websocket/events",
+				"/api/v1/requester/logs",
+			},
+			MaxBytesToReadInBody: "10MB",
+			ThrottleLimit:        1000,
+			Protocol:             "http",
+			LogLevel:             "info",
+			EnableSwaggerUI:      false,
 		},
 		BootstrapAddresses: []string{
 			"/ip4/34.86.177.175/tcp/1235/p2p/QmfYBQ3HouX9zKcANNXbgJnpyLpTYS9nKBANw6RUQKZffu",

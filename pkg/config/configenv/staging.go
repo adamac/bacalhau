@@ -21,14 +21,28 @@ var Staging = types.BacalhauConfig{
 		CheckFrequency: types.Duration(24 * time.Hour),
 	},
 	Node: types.NodeConfig{
-		ClientAPI: types.APIConfig{
+		ClientAPI: types.ClientAPIConfig{
 			Host: "bootstrap.staging.bacalhau.org",
 			Port: 1234,
-		},
-		ServerAPI: types.APIConfig{
-			Host: "0.0.0.0",
-			Port: 1234,
 			TLS:  types.TLSConfiguration{},
+		},
+		ServerAPI: types.ServerAPIConfig{
+			Host:                  "0.0.0.0",
+			Port:                  1234,
+			TLS:                   types.TLSConfiguration{},
+			ReadHeaderTimeout:     types.Duration(5 * time.Second),
+			ReadTimeout:           types.Duration(20 * time.Second),
+			WriteTimeout:          types.Duration(45 * time.Second),
+			RequestHandlerTimeout: types.Duration(30 * time.Second),
+			SkippedTimeoutPaths: []string{
+				"/api/v1/requester/websocket/events",
+				"/api/v1/requester/logs",
+			},
+			MaxBytesToReadInBody: "10MB",
+			ThrottleLimit:        1000,
+			Protocol:             "http",
+			LogLevel:             "info",
+			EnableSwaggerUI:      false,
 		},
 		BootstrapAddresses: []string{
 			"/ip4/34.85.228.65/tcp/1235/p2p/QmafZ9oCXCJZX9Wt1nhrGS9FVVq41qhcBRSNWCkVhz3Nvv",

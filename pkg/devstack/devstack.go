@@ -306,8 +306,8 @@ func (stack *DevStack) PrintNodeInfo(ctx context.Context, fsRepo *repo.FsRepo, c
 	}
 
 	logString := ""
-	devStackAPIPort := fmt.Sprintf("%d", stack.Nodes[0].APIServer.Port)
-	devStackAPIHost := stack.Nodes[0].APIServer.Address
+	devStackAPIPort := fmt.Sprintf("%d", stack.Nodes[0].APIServer.Config.Port)
+	devStackAPIHost := stack.Nodes[0].APIServer.Config.Host
 	devStackIPFSSwarmAddress := ""
 	var devstackPeerAddrs []string
 
@@ -371,9 +371,9 @@ export BACALHAU_API_PORT_%d=%d`,
 			nodeIndex,
 			devstackPeerAddr,
 			nodeIndex,
-			stack.Nodes[nodeIndex].APIServer.Address,
+			stack.Nodes[nodeIndex].APIServer.Config.Host,
 			nodeIndex,
-			stack.Nodes[nodeIndex].APIServer.Port,
+			stack.Nodes[nodeIndex].APIServer.Config.Port,
 		)
 
 		requesterOnlyNodes += boolToInt(node.IsRequesterNode() && !node.IsComputeNode())

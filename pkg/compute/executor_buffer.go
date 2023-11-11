@@ -6,12 +6,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/bacalhau-project/bacalhau/pkg/compute/capacity"
 	"github.com/bacalhau-project/bacalhau/pkg/compute/store"
 	"github.com/bacalhau-project/bacalhau/pkg/lib/collections"
 	"github.com/bacalhau-project/bacalhau/pkg/logger"
 	"github.com/bacalhau-project/bacalhau/pkg/system"
-	"github.com/rs/zerolog/log"
 )
 
 type bufferTask struct {
@@ -30,8 +31,8 @@ type ExecutorBufferParams struct {
 	ID                         string
 	DelegateExecutor           Executor
 	Callback                   Callback
-	RunningCapacityTracker     capacity.Tracker
-	EnqueuedCapacityTracker    capacity.Tracker
+	RunningCapacityTracker     capacity.Tracker `name:"running"`
+	EnqueuedCapacityTracker    capacity.Tracker `name:"enqueue"`
 	DefaultJobExecutionTimeout time.Duration
 }
 
@@ -43,8 +44,8 @@ type ExecutorBufferParams struct {
 // of compute nodes, though it might result in starvation and should be re-evaluated in the future.
 type ExecutorBuffer struct {
 	ID                         string
-	runningCapacity            capacity.Tracker
-	enqueuedCapacity           capacity.Tracker
+	runningCapacity            capacity.Tracker `name:"running"`
+	enqueuedCapacity           capacity.Tracker `name:"enqueue"`
 	delegateService            Executor
 	callback                   Callback
 	running                    map[string]*bufferTask

@@ -11,6 +11,7 @@ import (
 	"github.com/bacalhau-project/bacalhau/pkg/config/types"
 	"github.com/bacalhau-project/bacalhau/pkg/ipfs"
 	"github.com/bacalhau-project/bacalhau/pkg/node/modules/common"
+	"github.com/bacalhau-project/bacalhau/pkg/node/modules/compute"
 	"github.com/bacalhau-project/bacalhau/pkg/node/modules/requester"
 	"github.com/bacalhau-project/bacalhau/pkg/repo"
 	"github.com/bacalhau-project/bacalhau/pkg/routing"
@@ -23,6 +24,7 @@ func NewFXNode(ctx context.Context, cfg types.NodeConfig, ipfsClient ipfs.Client
 	// idk what this is for but we do it.
 	identify.ActivationThresh = 2
 
+	node := new(Node)
 	app := fx.New(
 		common.ConfigFields(cfg),
 		fx.Provide(func() *repo.FsRepo { return r }),
@@ -65,13 +67,14 @@ func NewFXNode(ctx context.Context, cfg types.NodeConfig, ipfsClient ipfs.Client
 		requester.Service(),
 
 		// required for compute node.
-		// fx.Provide(compute.ExecutorBuiltinProvider),
-		// fx.Provide(compute.PublisherBuiltinProvider),
+		fx.Provide(compute.ExecutorBuiltinProvider),
+		fx.Provide(compute.PublisherBuiltinProvider),
+		compute.Service(),
 	)
 
 	if err := app.Start(ctx); err != nil {
 		return nil, err
 	}
 
-	return nil, nil
+	return node, nil
 }

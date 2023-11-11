@@ -93,11 +93,18 @@ func NewJobEventConsumer(traceProvider *eventhandler.TracerContextProvider) *eve
 	return eventhandler.NewChainedJobEventHandler(traceProvider)
 }
 
-func NewEventEmitter(eventHandler eventhandler.JobEventHandler) orchestrator.EventEmitter {
+func NewEventEmitter(eventHandler *eventhandler.ChainedJobEventHandler) orchestrator.EventEmitter {
 	return orchestrator.NewEventEmitter(orchestrator.EventEmitterParams{EventConsumer: eventHandler})
 }
 
-func RegisterEventEmitterHandlers(lc fx.Lifecycle, emitter *eventhandler.ChainedJobEventHandler, provider *eventhandler.TracerContextProvider, h host.Host, requesterAPI *requester_endpoint.Endpoint, publisher *jobinfo.Publisher) error {
+func RegisterEventEmitterHandlers(
+	lc fx.Lifecycle,
+	h host.Host,
+	emitter *eventhandler.ChainedJobEventHandler,
+	provider *eventhandler.TracerContextProvider,
+	requesterAPI *requester_endpoint.Endpoint,
+	publisher *jobinfo.Publisher,
+) error {
 	// Register event handlers
 	eventTracer, err := eventhandler.NewTracer()
 	if err != nil {
@@ -478,6 +485,7 @@ func Service() fx.Option {
 		fx.Provide(NewBaseEndpoint),
 		fx.Provide(NewV2BaseEndpoint),
 		fx.Provide(NewRequesterAPIServer),
+		fx.Provide(NewRequesterService),
 
 		fx.Invoke(RegisterEventEmitterHandlers),
 		fx.Invoke(DispatchHouseKeeping),

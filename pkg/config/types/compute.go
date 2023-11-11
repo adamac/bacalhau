@@ -50,22 +50,22 @@ type LoggingConfig struct {
 }
 
 type ExecutorPluginConfig struct {
-	Plugins []PluginConfig
+	Plugins []PluginConfig `yaml:"Plugins"`
 }
 
 type PublisherPluginConfig struct {
-	Plugins []PluginConfig
+	Plugins []PluginConfig `yaml:"Plugins"`
 }
 
 type StoragePluginConfig struct {
-	Plugins []PluginConfig
+	Plugins []PluginConfig `yaml:"Plugins"`
 }
 
 type PluginConfig struct {
-	Name             string
-	Path             string
-	Command          string
-	ProtocolVersion  uint
-	MagicCookieKey   string
-	MagicCookieValue string
+	Name             string `yaml:"Name"`
+	Path             string `yaml:"Path"`
+	Command          string `yaml:"Command"`
+	ProtocolVersion  uint   `yaml:"ProtocolVersion"`
+	MagicCookieKey   string `yaml:"MagicCookieKey"`
+	MagicCookieValue string `yaml:"MagicCookieValue"`
 }

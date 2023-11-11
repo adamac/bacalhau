@@ -1,8 +1,11 @@
 package common
 
 import (
+	"context"
+
 	"github.com/labstack/echo/v4"
 	"github.com/libp2p/go-libp2p/core/host"
+	"go.uber.org/fx"
 
 	"github.com/bacalhau-project/bacalhau/pkg/config/types"
 	"github.com/bacalhau-project/bacalhau/pkg/publicapi"
@@ -11,7 +14,7 @@ import (
 	"github.com/bacalhau-project/bacalhau/pkg/routing"
 )
 
-func NewPublicAPIServer(cfg types.ServerAPIConfig, h host.Host, nodeInfoProvider *routing.NodeInfoProvider) (*publicapi.Server, error) {
+func NewPublicAPIServer(lc fx.Lifecycle, cfg types.ServerAPIConfig, h host.Host, nodeInfoProvider *routing.NodeInfoProvider) (*publicapi.Server, error) {
 	apiServer, err := publicapi.NewAPIServer(publicapi.ServerParams{
 		Router: echo.New(),
 		HostID: h.ID().String(),
@@ -32,6 +35,15 @@ func NewPublicAPIServer(cfg types.ServerAPIConfig, h host.Host, nodeInfoProvider
 	agent.NewEndpoint(agent.EndpointParams{
 		Router:           apiServer.Router,
 		NodeInfoProvider: nodeInfoProvider,
+	})
+
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			return apiServer.ListenAndServe(ctx)
+		},
+		OnStop: func(ctx context.Context) error {
+			return apiServer.Shutdown(ctx)
+		},
 	})
 
 	return apiServer, nil

@@ -46,17 +46,17 @@ type RequesterService struct {
 	Endpoint       requester.Endpoint
 	JobStore       jobstore.Store
 	NodeDiscoverer orchestrator.NodeDiscoverer
-	computeProxy   *bprotocol.ComputeProxy
-	localCallback  compute.Callback
+	ComputeProxy   *bprotocol.ComputeProxy
+	LocalCallback  compute.Callback
 }
 
-func NewRequesterService(endpoint *requester.BaseEndpoint, discover *discovery.Chain, store jobstore.Store, proxy *bprotocol.ComputeProxy) *RequesterService {
+func NewRequesterService(endpoint *requester.BaseEndpoint, discover orchestrator.NodeDiscoverer, store jobstore.Store, proxy *bprotocol.ComputeProxy) *RequesterService {
 	return &RequesterService{
 		Endpoint:       endpoint,
-		localCallback:  endpoint,
+		LocalCallback:  endpoint,
 		NodeDiscoverer: discover,
 		JobStore:       store,
-		computeProxy:   proxy,
+		ComputeProxy:   proxy,
 	}
 }
 
@@ -491,5 +491,6 @@ func Service() fx.Option {
 		fx.Invoke(DispatchHouseKeeping),
 		fx.Invoke(RegisterOrchestratorEndpoint),
 		fx.Invoke(DispatchHouseKeeping),
+		fx.Invoke(DispatchOrchestratorWorkers),
 	)
 }

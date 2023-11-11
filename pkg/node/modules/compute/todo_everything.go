@@ -44,13 +44,13 @@ func NewExecutionStore(lc fx.Lifecycle, r *repo.FsRepo, h host.Host) (store.Exec
 	return store, nil
 }
 
-func NewRunningCapacityTracker(cfg types.CapacityConfig) *capacity.LocalTracker {
+func NewRunningCapacityTracker(cfg types.CapacityConfig) capacity.Tracker {
 	return capacity.NewLocalTracker(capacity.LocalTrackerParams{
 		MaxCapacity: models.Resources(model.ParseResourceUsageConfig(cfg.TotalResourceLimits)),
 	})
 }
 
-func NewEnqueuedCapacityTracker(cfg types.CapacityConfig) *capacity.LocalTracker {
+func NewEnqueuedCapacityTracker(cfg types.CapacityConfig) capacity.Tracker {
 	return capacity.NewLocalTracker(capacity.LocalTrackerParams{
 		MaxCapacity: models.Resources(model.ParseResourceUsageConfig(cfg.QueueResourceLimits)),
 	})
@@ -102,8 +102,8 @@ type executorBufferParams struct {
 	H              host.Host
 	Base           *compute.BaseExecutor
 	Callback       *bprotocol.CallbackProxy
-	RunningTracker *capacity.LocalTracker `name:"running"`
-	EnqueueTracker *capacity.LocalTracker `name:"enqueue"`
+	RunningTracker capacity.Tracker `name:"running"`
+	EnqueueTracker capacity.Tracker `name:"enqueue"`
 }
 
 func NewExecutorBuffer(
@@ -139,7 +139,7 @@ func InvokeLoggingSensor(lc fx.Lifecycle, cfg types.LoggingConfig, provider *sen
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			// TODO do we need a stop method or is this context canceled when the app closes?
-			logSensor.Start(ctx)
+			go logSensor.Start(ctx)
 			return nil
 		},
 	})
@@ -206,8 +206,8 @@ type resourceBidStrategyParams struct {
 
 	Cfg            types.CapacityConfig
 	Executors      executor.ExecutorProvider
-	RunningTracker *capacity.LocalTracker `name:"running"`
-	EnqueueTracker *capacity.LocalTracker `name:"enqueue"`
+	RunningTracker capacity.Tracker `name:"running"`
+	EnqueueTracker capacity.Tracker `name:"enqueue"`
 }
 
 func NewResourceBidStrategy(params resourceBidStrategyParams) bidstrategy.ResourceBidStrategy {
@@ -234,21 +234,25 @@ func NewLogStreamServer(h host.Host, store store.ExecutionStore, executors execu
 	})
 }
 
-func NewNodeInfoProvider(
-	cfg types.CapacityConfig,
-	executors executor.ExecutorProvider,
-	storages storage.StorageProvider,
-	publishers publisher.PublisherProvider,
-	runningTracker *capacity.LocalTracker,
-	bufferRunner *compute.ExecutorBuffer,
-) *compute.NodeInfoProvider {
+type nodeInfoProviderParams struct {
+	fx.In
+
+	Cfg            types.CapacityConfig
+	Executors      executor.ExecutorProvider
+	Storages       storage.StorageProvider
+	Publishers     publisher.PublisherProvider
+	RunningTracker capacity.Tracker `name:"running"`
+	BufferRunner   *compute.ExecutorBuffer
+}
+
+func NewNodeInfoProvider(params nodeInfoProviderParams) *compute.NodeInfoProvider {
 	return compute.NewNodeInfoProvider(compute.NodeInfoProviderParams{
-		Executors:          executors,
-		Publisher:          publishers,
-		Storages:           storages,
-		CapacityTracker:    runningTracker,
-		ExecutorBuffer:     bufferRunner,
-		MaxJobRequirements: models.Resources(model.ParseResourceUsageConfig(cfg.JobResourceLimits)),
+		Executors:          params.Executors,
+		Publisher:          params.Publishers,
+		Storages:           params.Storages,
+		CapacityTracker:    params.RunningTracker,
+		ExecutorBuffer:     params.BufferRunner,
+		MaxJobRequirements: models.Resources(model.ParseResourceUsageConfig(params.Cfg.JobResourceLimits)),
 	})
 }
 
@@ -335,39 +339,43 @@ type ComputeService struct {
 	// Visible for testing
 	ID                  string
 	LocalEndpoint       compute.Endpoint
+	Capacity            capacity.Tracker
+	ExecutionStore      store.ExecutionStore
+	Executors           executor.ExecutorProvider
+	Storages            storage.StorageProvider
+	LogServer           *logstream.LogStreamServer
+	Bidder              compute.Bidder
+	ComputeCallback     *bprotocol.CallbackProxy
+	ComputeInfoProvider *compute.NodeInfoProvider
+}
+
+type serviceParams struct {
+	fx.In
+
+	H                   host.Host
+	LocalEndpoint       compute.BaseEndpoint
 	Capacity            capacity.Tracker `name:"running"`
 	ExecutionStore      store.ExecutionStore
 	Executors           executor.ExecutorProvider
 	Storages            storage.StorageProvider
 	LogServer           *logstream.LogStreamServer
 	Bidder              compute.Bidder
-	computeCallback     *bprotocol.CallbackProxy
-	computeInfoProvider *compute.NodeInfoProvider
+	ComputeCallback     *bprotocol.CallbackProxy
+	ComputeInfoProvider *compute.NodeInfoProvider
 }
 
-func NewComputeService(
-	h host.Host,
-	localEndpoint compute.Endpoint,
-	capacity capacity.Tracker,
-	executionStore store.ExecutionStore,
-	executors executor.ExecutorProvider,
-	storages storage.StorageProvider,
-	logServer *logstream.LogStreamServer,
-	bidder compute.Bidder,
-	computeCallback *bprotocol.CallbackProxy,
-	computeInfoProvider *compute.NodeInfoProvider,
-) *ComputeService {
+func NewComputeService(params serviceParams) *ComputeService {
 	return &ComputeService{
-		ID:                  h.ID().String(),
-		LocalEndpoint:       localEndpoint,
-		Capacity:            capacity,
-		ExecutionStore:      executionStore,
-		Executors:           executors,
-		Storages:            storages,
-		LogServer:           logServer,
-		Bidder:              bidder,
-		computeCallback:     computeCallback,
-		computeInfoProvider: computeInfoProvider,
+		ID:                  params.H.ID().String(),
+		LocalEndpoint:       params.LocalEndpoint,
+		Capacity:            params.Capacity,
+		ExecutionStore:      params.ExecutionStore,
+		Executors:           params.Executors,
+		Storages:            params.Storages,
+		LogServer:           params.LogServer,
+		Bidder:              params.Bidder,
+		ComputeCallback:     params.ComputeCallback,
+		ComputeInfoProvider: params.ComputeInfoProvider,
 	}
 }
 

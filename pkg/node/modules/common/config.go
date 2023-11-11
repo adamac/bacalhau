@@ -22,5 +22,6 @@ func ConfigFields(cfg types.NodeConfig) fx.Option {
 		fx.Provide(func() types.JobTimeoutConfig { return cfg.Compute.JobTimeouts }),
 		fx.Provide(func() types.CapacityConfig { return cfg.Compute.Capacity }),
 		fx.Provide(func() model.JobSelectionPolicy { return cfg.Compute.JobSelection }),
+		fx.Provide(func() types.WorkerConfig { return cfg.Requester.Worker }),
 	)
 }

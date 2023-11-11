@@ -255,15 +255,19 @@ func serve(cmd *cobra.Command) error {
 		return err
 	}
 
-	if _, err := node.NewFXNode(ctx, nodeCfg, ipfsClient, fsRepo); err != nil {
+	standardNode, err := node.NewFXNode(ctx, nodeCfg, ipfsClient, fsRepo)
+	if err != nil {
 		return err
 	}
 
 	// Create node
-	standardNode, err := node.NewNode(ctx, nodeConfig)
-	if err != nil {
-		return fmt.Errorf("error creating node: %w", err)
-	}
+	/*
+		standardNode, err := node.NewNode(ctx, nodeConfig)
+		if err != nil {
+			return fmt.Errorf("error creating node: %w", err)
+		}
+
+	*/
 
 	// Start transport layer
 	err = bac_libp2p.ConnectToPeersContinuously(ctx, cm, libp2pHost, peers)
@@ -271,13 +275,16 @@ func serve(cmd *cobra.Command) error {
 		return err
 	}
 
-	// Start node
-	if err := standardNode.Start(ctx); err != nil {
-		return fmt.Errorf("error starting node: %w", err)
-	}
+	/*
+		// Start node
+		if err := standardNode.Start(ctx); err != nil {
+			return fmt.Errorf("error starting node: %w", err)
+		}
+
+	*/
 
 	// only in station logging output
-	if config.GetLogMode() == logger.LogModeStation && standardNode.IsComputeNode() {
+	if config.GetLogMode() == logger.LogModeStation && standardNode.IsCompute() {
 		cmd.Printf("API: %s\n", standardNode.APIServer.GetURI().JoinPath("/api/v1/compute/debug"))
 	}
 

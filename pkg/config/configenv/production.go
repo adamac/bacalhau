@@ -9,6 +9,7 @@ import (
 	"github.com/bacalhau-project/bacalhau/pkg/config/types"
 	"github.com/bacalhau-project/bacalhau/pkg/logger"
 	"github.com/bacalhau-project/bacalhau/pkg/model"
+	"github.com/bacalhau-project/bacalhau/pkg/models"
 )
 
 var Production = types.BacalhauConfig{
@@ -137,6 +138,30 @@ var ProductionComputeConfig = types.ComputeConfig{
 	Queue: types.QueueConfig{},
 	Logging: types.LoggingConfig{
 		LogRunningExecutionsInterval: types.Duration(10 * time.Second),
+	},
+	Executors: types.ExecutorPluginConfig{
+		Plugins: []types.PluginConfig{
+			{
+				Name: models.EngineDocker,
+			},
+			{
+				Name: models.EngineWasm,
+			},
+		},
+	},
+	Publishers: types.PublisherPluginConfig{
+		Plugins: []types.PluginConfig{
+			{
+				Name: models.PublisherIPFS,
+			},
+		},
+	},
+	Storages: types.StoragePluginConfig{
+		Plugins: []types.PluginConfig{
+			{
+				Name: models.StorageSourceIPFS,
+			},
+		},
 	},
 }
 

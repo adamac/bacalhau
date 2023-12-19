@@ -163,7 +163,7 @@ func NewRequesterNode(
 
 		// planner that generates new evaluations to defer jobs
 		planner.NewReEvaluator(planner.ReEvaluatorParams{
-			ID: host.ID().String(),
+			ID:               host.ID().String(),
 			EvaluationBroker: evalBroker,
 		}),
 

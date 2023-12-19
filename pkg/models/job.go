@@ -120,7 +120,7 @@ type Job struct {
 
 	// SchedulingTimeout is the time, in seconds, the job is allowed to wait
 	// to be scheduled before we give up trying.
-	SchedulingTimeout int64  `json:"SchedulingDeadline"`
+	SchedulingTimeout int64 `json:"SchedulingDeadline"`
 }
 
 func (j *Job) String() string {
